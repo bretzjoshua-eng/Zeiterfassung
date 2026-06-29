@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="mobile-web-app-capable" content="yes">
+<title>⏱ Zeiterfassung</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#111;color:#F2F2F7;font-family:-apple-system,system-ui,sans-serif;min-height:100vh;-webkit-tap-highlight-color:transparent}
+#app{max-width:480px;margin:0 auto;padding-bottom:90px}
+
+/* NAV */
+.hdr{background:#1C1C1E;border-bottom:1px solid #2C2C2E;padding:18px 16px 12px;position:sticky;top:0;z-index:100}
+.hdr-row{display:flex;justify-content:space-between;align-items:baseline}
+.hdr h1{font-size:20px;font-weight:700;color:#FF6B35}
+.hdr-sub{font-size:12px;color:#636366}
+.tabs{display:flex;background:#1C1C1E;border-bottom:1px solid #2C2C2E;position:sticky;top:58px;z-index:99}
+.tb{flex:1;padding:11px 2px;background:none;border:none;border-bottom:2px solid transparent;color:#636366;font-size:12px;font-weight:500;cursor:pointer}
+.tb.on{color:#FF6B35;border-bottom-color:#FF6B35;font-weight:700}
+.sec{padding:14px 14px 0;display:none}.sec.on{display:block}
+
+/* CARDS */
+.card{background:#1C1C1E;border-radius:14px;padding:14px;margin-bottom:10px;border:1px solid #2C2C2E}
+.card-sm{background:#1C1C1E;border-radius:12px;padding:12px 14px;margin-bottom:8px;border:1px solid #2C2C2E}
+.ct{font-size:14px;font-weight:600;margin-bottom:10px;color:#F2F2F7}
+.ct-sm{font-size:12px;font-weight:700;color:#8E8E93;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+
+/* FORM */
+.lbl{display:block;font-size:11px;color:#8E8E93;margin-bottom:3px;font-weight:500}
+input,select,textarea{width:100%;background:#2C2C2E;border:1px solid #3A3A3C;border-radius:9px;color:#F2F2F7;font-size:15px;padding:9px 11px;outline:none;-webkit-appearance:none}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath fill='%238E8E93' d='M5 7L0 0h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.field{margin-bottom:8px}
+
+/* SEGMENTED */
+.seg{display:flex;background:#2C2C2E;border-radius:9px;padding:2px;gap:2px;margin-bottom:10px}
+.sg{flex:1;background:none;border:none;color:#8E8E93;font-size:12px;font-weight:600;padding:8px 4px;border-radius:7px;cursor:pointer}
+.sg.on{color:#fff}
+.sg.on.cl-o{background:#FF6B35}
+.sg.on.cl-v{background:#30D158}
+.sg.on.cl-n{background:#5E5CE6}
+.sg.on.cl-g{background:#FF9F0A}
+
+/* BUTTONS */
+.btn{display:block;width:100%;border:none;border-radius:11px;padding:12px;font-size:15px;font-weight:700;cursor:pointer;margin-top:6px}
+.btn-o{background:#FF6B35;color:#fff}
+.btn-s{background:#2C2C2E;color:#F2F2F7}
+.btn-g{background:#30D158;color:#fff}
+.btn-sm{background:#2C2C2E;color:#F2F2F7;border:none;border-radius:9px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer}
+
+/* CLOCK */
+.clk{background:linear-gradient(135deg,#1C1C1E,#2C2C2E);border-radius:14px;padding:14px 16px;margin-bottom:12px;border:1px solid #2C2C2E;display:flex;justify-content:space-between;align-items:center}
+.clk-t{font-size:30px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-1px}
+.clk-d{font-size:12px;color:#8E8E93;text-align:right;margin-bottom:5px}
+
+/* PREVIEW */
+.pvb{background:#2C2C2E;border-radius:9px;padding:9px 12px;margin-bottom:8px;font-size:13px;line-height:1.7}
+.pvb strong{color:#FF6B35}
+.pvb .s2{font-size:11px;color:#8E8E93}
+.hint-box{font-size:12px;color:#B8B6FF;background:rgba(94,92,230,.1);border:1px solid rgba(94,92,230,.25);border-radius:9px;padding:8px 11px;margin-bottom:8px}
+
+/* KONTO CARDS */
+.konto{border-radius:14px;padding:14px;margin-bottom:10px}
+.konto-aps{background:linear-gradient(135deg,rgba(255,107,53,.12),rgba(255,107,53,.04));border:1px solid rgba(255,107,53,.3)}
+.konto-fus{background:linear-gradient(135deg,rgba(100,210,255,.1),rgba(100,210,255,.03));border:1px solid rgba(100,210,255,.25)}
+.konto-url{background:linear-gradient(135deg,rgba(48,209,88,.1),rgba(48,209,88,.03));border:1px solid rgba(48,209,88,.25)}
+.konto-label{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.konto-label.aps{color:#FF6B35}.konto-label.fus{color:#64D2FF}.konto-label.url{color:#30D158}
+.konto-h{font-size:28px;font-weight:800;letter-spacing:-1px}
+.konto-h.aps{color:#FF6B35}.konto-h.fus{color:#64D2FF}.konto-h.url{color:#30D158}
+.konto-sub{font-size:11px;color:#8E8E93;margin-top:2px}
+.konto-bar{height:5px;border-radius:3px;background:#2C2C2E;margin-top:8px;overflow:hidden}
+.konto-fill{height:100%;border-radius:3px;background:#FF6B35;transition:width .4s}
+
+/* WEEK/MONTH VIEW */
+.wnav{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.wnb{background:#1C1C1E;border:1px solid #2C2C2E;color:#F2F2F7;font-size:18px;width:38px;height:38px;border-radius:9px;cursor:pointer;flex-shrink:0}
+.wnl{font-size:13px;font-weight:700;text-align:center;flex:1;color:#F2F2F7}
+.wbox{background:#1C1C1E;border-radius:14px;border:1px solid #2C2C2E;overflow:hidden}
+.wkhr{display:flex;justify-content:space-between;align-items:center;padding:12px 14px 10px;border-bottom:1px solid #2C2C2E}
+.wkkw{font-size:12px;font-weight:700;color:#FF6B35;text-transform:uppercase;letter-spacing:.5px}
+.wktb{background:#FF6B35;color:#fff;font-size:14px;font-weight:800;padding:3px 12px;border-radius:16px}
+.wd{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid #1A1A1A}
+.wd:last-child{border-bottom:none}
+.wd.td{background:rgba(255,107,53,.06)}
+.wd.we .wdn{color:#48484A}
+.wdl{display:flex;align-items:center;gap:9px}
+.dot{width:7px;height:7px;border-radius:50%;background:#2C2C2E;flex-shrink:0}
+.dot.dw{background:#FF6B35}.dot.du{background:#30D158}.dot.dn{background:#5E5CE6}.dot.dok{background:#FF9F0A}
+.wdn{font-size:14px;font-weight:600}
+.wddt{font-size:11px;color:#636366}
+.wdm{font-size:11px;color:#48484A;margin-top:1px}
+.wdh{font-size:15px;font-weight:700;text-align:right;min-width:50px}
+.wdh.e{color:#3A3A3C;font-size:13px;font-weight:400}
+.wdh.u{color:#30D158}.wdh.n{color:#B8B6FF}.wdh.ok{color:#FF9F0A}
+.wk-sep{background:#2C2C2E;padding:8px 14px;display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:#8E8E93;border-bottom:1px solid #1A1A1A}
+.wk-sep span:last-child{color:#FF6B35}
+.otrow{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px solid #2C2C2E}
+.otrow:last-child{border-bottom:none}
+.otl{font-size:13px;color:#F2F2F7}.otl small{font-size:11px;color:#636366;display:block}
+.otv{font-size:15px;font-weight:700}
+.pos{color:#30D158}.neg{color:#FF453A}.col-o{color:#FF6B35}.col-f{color:#64D2FF}
+.del{background:none;border:none;color:#FF453A;font-size:19px;cursor:pointer;padding:0 3px;line-height:1}
+.etag{display:inline-block;font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;margin-left:5px;vertical-align:middle;text-transform:uppercase}
+.etag.n{background:rgba(94,92,230,.2);color:#B8B6FF}
+.etag.u{background:rgba(48,209,88,.2);color:#6FE39A}
+.etag.ok{background:rgba(255,159,10,.2);color:#FF9F0A}
+.empty{text-align:center;padding:36px 16px;color:#48484A;font-size:14px;line-height:1.8}
+#print-area{display:none}
+@media print{body{background:#fff!important;color:#000!important}#app{display:none!important}#print-area{display:block!important}}
+</style>
+</head>
+<body>
+<div id="app">
+<div class="hdr">
+  <div class="hdr-row"><h1>⏱ Zeiterfassung</h1><span class="hdr-sub" id="ecnt"></span></div>
+</div>
+<div class="tabs">
+  <button class="tb on" onclick="go('e')">Eintragen</button>
+  <button class="tb" onclick="go('k')">Konten</button>
+  <button class="tb" onclick="go('w')">Woche</button>
+  <button class="tb" onclick="go('m')">Monat</button>
+  <button class="tb" onclick="go('x')">Ausdruck</button>
+</div>
+
+<!-- ═══ EINTRAGEN ═══ -->
+<div class="sec on" id="sec-e">
+  <div class="clk">
+    <div><div style="font-size:10px;color:#636366;letter-spacing:.5px;margin-bottom:2px">JETZT</div><div class="clk-t" id="clkt">--:--</div></div>
+    <div><div class="clk-d" id="clkd"></div><button class="btn-sm" onclick="setNow()">← Als Ende</button></div>
+  </div>
+  <div class="card">
+    <div class="ct" id="ftit">Neuer Eintrag</div>
+    <div class="seg">
+      <button class="sg on cl-o" id="tb-n" onclick="setT('n')">☀️ Normal</button>
+      <button class="sg cl-n" id="tb-nt" onclick="setT('nt')">🌙 Nacht</button>
+      <button class="sg cl-v" id="tb-u" onclick="setT('u')">🏖️ Urlaub</button>
+    </div>
+    <div class="field"><label class="lbl">Datum</label><input type="date" id="fd"></div>
+    <div id="tfields">
+      <div class="row2">
+        <div><label class="lbl">Von</label><input type="time" id="fs" value="07:00" oninput="uprev()"></div>
+        <div><label class="lbl">Bis</label><input type="time" id="fe" value="15:30" oninput="uprev()"></div>
+      </div>
+      <div class="field"><label class="lbl">Pause (min)</label><input type="number" id="fp" value="30" min="0" max="180" step="5" oninput="uprev()"></div>
+    </div>
+    <!-- Nachtschicht Faktor -->
+    <div id="nf-row" style="display:none" class="field">
+      <div class="hint-box">🌙 Stunden 20–05 Uhr werden mit Faktor multipliziert</div>
+      <label class="lbl">Nachtzuschlag-Faktor</label>
+      <select id="nf" onchange="uprev()"><option value="1.25">1,25×</option><option value="1.5">1,5×</option><option value="2" selected>2×</option></select>
+    </div>
+    <!-- Urlaub Quelle -->
+    <div id="url-row" style="display:none" class="field">
+      <label class="lbl">Urlaub verbuchen von</label>
+      <select id="url-src"><option value="u">Urlaubskonto</option><option value="ot">Überstunden (APS/Fussenegger)</option></select>
+    </div>
+    <div class="field"><label class="lbl">Bemerkung (optional)</label><input type="text" id="fn" placeholder="z.B. Baustelle Dornbirn"></div>
+    <div class="pvb" id="pvb">Netto: <strong>–</strong></div>
+    <button class="btn btn-o" id="sbtn" onclick="saveE()">Speichern</button>
+    <button class="btn btn-s" id="cbtn" onclick="cancelE()" style="display:none">Abbrechen</button>
+  </div>
+</div>
+
+<!-- ═══ KONTEN ═══ -->
+<div class="sec" id="sec-k">
+  <!-- APS -->
+  <div class="konto konto-aps">
+    <div class="konto-label aps">APS – Überstundenkonto</div>
+    <div class="konto-h aps" id="k-aps">0h</div>
+    <div class="konto-sub" id="k-aps-sub">max. 8h</div>
+    <div class="konto-bar"><div class="konto-fill" id="k-aps-bar" style="width:0%"></div></div>
+  </div>
+  <!-- Fussenegger -->
+  <div class="konto konto-fus">
+    <div class="konto-label fus">Fussenegger – Überstundenkonto</div>
+    <div class="konto-h fus" id="k-fus">0h</div>
+    <div class="konto-sub">alles über 8h APS</div>
+  </div>
+  <!-- Urlaub -->
+  <div class="konto konto-url">
+    <div class="konto-label url">Urlaubskonto</div>
+    <div class="konto-h url" id="k-url">0 Tage</div>
+    <div class="konto-sub" id="k-url-sub"></div>
+  </div>
+  <!-- Einstellungen -->
+  <div class="card" style="border-color:#3A3A3C">
+    <div class="ct-sm">⚙️ Einstellungen</div>
+    <div class="row2">
+      <div><label class="lbl">Sollstunden/Woche</label><input type="number" id="soll" value="40" min="1" max="80" step="0.5" oninput="saveSett()"></div>
+      <div><label class="lbl">Urlaubstage (aktuell)</label><input type="number" id="url-start" value="5" min="0" step="0.5" oninput="saveSett()"></div>
+    </div>
+    <div class="field" style="margin-bottom:0"><label class="lbl">Urlaubszählung ab Datum (+1 Tag/2 Wochen)</label><input type="date" id="url-from" oninput="saveSett()"></div>
+  </div>
+  <!-- Diese Woche -->
+  <div class="card">
+    <div class="ct-sm">Diese Woche</div>
+    <div id="k-week"></div>
+  </div>
+</div>
+
+<!-- ═══ WOCHE ═══ -->
+<div class="sec" id="sec-w">
+  <div class="wnav">
+    <button class="wnb" onclick="wOff--;rwv()">‹</button>
+    <div class="wnl" id="wnl"></div>
+    <button class="wnb" onclick="wOff++;rwv()">›</button>
+  </div>
+  <div class="wbox" id="wbox"></div>
+</div>
+
+<!-- ═══ MONAT ═══ -->
+<div class="sec" id="sec-m">
+  <div class="wnav">
+    <button class="wnb" onclick="mOff--;rmonth()">‹</button>
+    <div class="wnl" id="mnl"></div>
+    <button class="wnb" onclick="mOff++;rmonth()">›</button>
+  </div>
+  <div id="mbox"></div>
+</div>
+
+<!-- ═══ AUSDRUCK ═══ -->
+<div class="sec" id="sec-x">
+  <div class="card">
+    <div class="ct">Stundenzettel</div>
+    <div class="seg" style="margin-bottom:10px">
+      <button class="sg on cl-o" id="xm-m" onclick="setXM('m')">Monat</button>
+      <button class="sg cl-o" id="xm-k" onclick="setXM('k')">Kalenderwoche</button>
+    </div>
+    <div class="field"><label class="lbl" id="xsl">Monat</label>
+      <select id="xsm" onchange="rxp()"><option value="">Alle</option></select>
+      <select id="xsk" onchange="rxp()" style="display:none"><option value="">Alle</option></select>
+    </div>
+    <!-- Umschalter APS / Fussenegger -->
+    <div class="seg" style="margin-bottom:0">
+      <button class="sg on cl-o" id="xv-aps" onclick="setXV('aps')">🟠 APS (39h/Woche)</button>
+      <button class="sg cl-g" id="xv-fus" onclick="setXV('fus')">🔵 Fussenegger (Original)</button>
+    </div>
+  </div>
+  <!-- Anzeige -->
+  <div id="xview"></div>
+  <div class="card" style="border-color:#3A3A3C;margin-top:0">
+    <div class="ct-sm">Datensicherung</div>
+    <p style="font-size:12px;color:#636366;margin-bottom:10px">Einträge lokal gespeichert — regelmäßig exportieren!</p>
+    <button class="btn-sm" onclick="doExp()">💾 JSON exportieren</button>
+  </div>
+</div>
+</div>
+<div id="print-area"></div>
+
+<script>
+// ── Konstanten ──────────────────────────────────────────────────────────────
+const SK='zt_v4',SS='zt_s4';
+const DY=['So','Mo','Di','Mi','Do','Fr','Sa'];
+const DML=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const DMS=['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+const APS_MAX=8*60, APS_START=7*60, URLAUB_H=8*60;
+
+// ── State ───────────────────────────────────────────────────────────────────
+let D={}, S={soll:40,urlStart:5,urlFrom:''},eT='n',wOff=0,mOff=0,xMode='m',editK=null;
+
+// ── Storage ─────────────────────────────────────────────────────────────────
+const mem={};
+const st={
+  g:k=>{try{return localStorage.getItem(k)}catch{return mem[k]??null}},
+  s:(k,v)=>{try{localStorage.setItem(k,v)}catch{}mem[k]=v}
+};
+function loadD(){try{D=JSON.parse(st.g(SK))||{}}catch{D={}}migAll()}
+function migAll(){
+  if(Object.keys(D).length>0)return; // schon Daten vorhanden
+  const oldKeys=['zeiterfassung_v3','zt_v3','zeiterfassung_v2'];
+  let found=null;
+  for(const k of oldKeys){
+    try{const v=st.g(k);if(v){const p=JSON.parse(v);if(p&&typeof p==='object'&&Object.keys(p).length>0){found=p;break}}}catch{}
+  }
+  if(!found)return;
+  let n=0;
+  Object.keys(found).forEach(date=>{
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date))return;
+    if(D[date])return;
+    const e=found[date];if(!e)return;
+    const t=e.type||'n';
+    if(t==='u'||t==='urlaub'){D[date]={type:'u',net:URLAUB_H,src:e.src||'u',note:e.note||''}}
+    else if(t==='nt'||t==='nacht'){D[date]={type:'nt',start:e.start,end:e.end,pause:e.pause||0,net:e.netMins||e.net||0,nMin:e.nMin||0,dMin:e.dMin||0,factor:e.factor||2,note:e.note||''}}
+    else{D[date]={type:'n',start:e.start,end:e.end,pause:e.pause||0,net:e.netMins||e.net||Math.max(0,span(e.start||'00:00',e.end||'00:00')-(e.pause||0)),note:e.note||''}}
+    n++;
+  });
+  if(n>0){saveD();setTimeout(()=>alert(`✅ ${n} Einträge wiederhergestellt!`),300)}
+}
+function saveD(){st.s(SK,JSON.stringify(D))}
+function loadS(){try{const s=JSON.parse(st.g(SS));if(s)Object.assign(S,s)}catch{}}
+function saveSett(){
+  S.soll=parseFloat(document.getElementById('soll').value)||40;
+  S.urlStart=parseFloat(document.getElementById('url-start').value)||0;
+  S.urlFrom=document.getElementById('url-from').value||'';
+  st.s(SS,JSON.stringify(S));
+  rkonten();
+}
+
+// ── Helpers ─────────────────────────────────────────────────────────────────
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const toM=t=>{const[h,m]=t.split(':').map(Number);return h*60+m};
+const fmt=m=>{if(!m&&m!==0)return'–';const h=Math.floor(Math.abs(m)/60),mn=Math.round(Math.abs(m)%60);return(m<0?'−':'')+(mn?`${h}h ${mn}min`:`${h}h`)};
+const fmtD=n=>`${n} Tag${n===1?'':'e'}`;
+
+function ddisp(s){const d=new Date(s+'T12:00:00');return`${DY[d.getDay()]}, ${d.getDate()}. ${DMS[d.getMonth()]} ${d.getFullYear()}`}
+
+function span(a,b){let s=toM(a),e=toM(b);if(e<=s)e+=1440;return e-s}
+
+function nightAdj(a,b,p,f){
+  let s=toM(a),e=toM(b);if(e<=s)e+=1440;
+  const tot=e-s;if(!tot)return{net:0,nMin:0,dMin:0};
+  let nRaw=0;
+  for(let d=-1;d<=1;d++){const ws=d*1440+1200,we=d*1440+1740;nRaw+=Math.max(0,Math.min(e,we)-Math.max(s,ws))}
+  nRaw=Math.min(tot,nRaw);const dRaw=tot-nRaw;
+  const nNet=Math.max(0,nRaw-p*(nRaw/tot)),dNet=Math.max(0,dRaw-p*(dRaw/tot));
+  return{net:dNet+nNet*f,nMin:nNet,dMin:dNet};
+}
+
+function isoWk(s){
+  const d=new Date(s+'T12:00:00'),t=new Date(d);
+  t.setDate(d.getDate()-((d.getDay()+6)%7)+3);
+  const y=t.getFullYear(),j=new Date(y,0,1);
+  j.setDate(j.getDate()-((j.getDay()+6)%7)+3);
+  return`${y}-W${pad(1+Math.round((t-j)/604800000))}`;
+}
+function wkMon(y,w){
+  const j=new Date(y,0,1);j.setDate(j.getDate()-((j.getDay()+6)%7)+3);
+  const t=new Date(j);t.setDate(j.getDate()+(w-1)*7);t.setDate(t.getDate()-3);return t;
+}
+function wkLabel(k){
+  const[ys,ws]=k.split('-W');const w=parseInt(ws),y=parseInt(ys);
+  const m=wkMon(y,w),su=new Date(m);su.setDate(m.getDate()+6);
+  return m.getMonth()===su.getMonth()?`${m.getDate()}.–${su.getDate()}. ${DMS[m.getMonth()]} ${su.getFullYear()}`:`${m.getDate()}. ${DMS[m.getMonth()]} – ${su.getDate()}. ${DMS[su.getMonth()]} ${su.getFullYear()}`;
+}
+
+const keys=()=>Object.keys(D).sort((a,b)=>b.localeCompare(a));
+const months=()=>[...new Set(keys().map(k=>k.slice(0,7)))].sort((a,b)=>b.localeCompare(a));
+const wks=()=>[...new Set(keys().map(k=>isoWk(k)))].sort((a,b)=>b.localeCompare(a));
+const sumM=ks=>ks.reduce((s,k)=>s+(D[k]?.net||0),0);
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+// ── Urlaubskonto berechnen ──────────────────────────────────────────────────
+function calcUrl(){
+  // Automatisch +0,5 alle 2 Wochen seit urlFrom
+  let auto=0;
+  if(S.urlFrom){
+    const from=new Date(S.urlFrom+'T12:00:00'),now=new Date();
+    const diffMs=now-from;
+    if(diffMs>0){const weeks=diffMs/(7*86400000);auto=Math.floor(weeks/2)*1}
+  }
+  // Verbrauchte Urlaubstage (aus Urlaubskonto, nicht aus Überstunden)
+  const used=keys().filter(k=>D[k]?.type==='u'&&D[k]?.src==='u').length;
+  return{saldo:S.urlStart+auto-used,auto,used,start:S.urlStart};
+}
+
+// ── Überstundenkonto berechnen ──────────────────────────────────────────────
+function calcOT(){
+  const soll=S.soll*60;
+  // Wochen-Ist (nur nicht-Urlaub-Einträge)
+  const byWk={};
+  keys().forEach(k=>{
+    const e=D[k];if(e.type==='u')return;
+    const w=isoWk(k);if(!byWk[w])byWk[w]=0;byWk[w]+=e.net||0;
+  });
+  // Gesamt-Überstunden (Summe aller positiven Wochendifferenzen)
+  let total=Object.values(byWk).reduce((s,ist)=>s+Math.max(0,ist-soll),0);
+  // APS startet bei 6,36h und geht max bis 8h
+  const aps=Math.min(total+APS_START,APS_MAX);
+  const fus=Math.max(0,total-(APS_MAX-APS_START));
+  return{total,aps,fus,byWk};
+}
+
+// ── Clock ───────────────────────────────────────────────────────────────────
+function tick(){
+  const n=new Date();
+  document.getElementById('clkt').textContent=`${pad(n.getHours())}:${pad(n.getMinutes())}`;
+  document.getElementById('clkd').textContent=`${DY[n.getDay()]}, ${n.getDate()}. ${DMS[n.getMonth()]}`;
+}
+function setNow(){const n=new Date();document.getElementById('fe').value=`${pad(n.getHours())}:${pad(n.getMinutes())}`;uprev()}
+
+// ── Tabs ─────────────────────────────────────────────────────────────────────
+function go(t){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.tb').forEach(b=>b.classList.remove('on'));
+  document.getElementById('sec-'+t).classList.add('on');
+  ['e','k','w','m','x'].forEach((id,i)=>{if(id===t)document.querySelectorAll('.tb')[i].classList.add('on')});
+  if(t==='k')rkonten();
+  if(t==='w')rwv();
+  if(t==='m')rmonth();
+  if(t==='x')rxsel();
+}
+
+// ── Eintragen ────────────────────────────────────────────────────────────────
+function setT(t){
+  eT=t;
+  ['n','nt','u'].forEach(x=>document.getElementById('tb-'+x).classList.remove('on'));
+  document.getElementById('tb-'+t).classList.add('on');
+  document.getElementById('tfields').style.display=t==='u'?'none':'block';
+  document.getElementById('nf-row').style.display=t==='nt'?'block':'none';
+  document.getElementById('url-row').style.display=t==='u'?'block':'none';
+  uprev();
+}
+function uprev(){
+  const box=document.getElementById('pvb');
+  if(eT==='u'){box.innerHTML='Urlaubstag: <strong>8h</strong>';return}
+  const a=document.getElementById('fs').value,b=document.getElementById('fe').value,p=parseInt(document.getElementById('fp').value)||0;
+  if(!a||!b){box.innerHTML='Netto: <strong>–</strong>';return}
+  if(eT==='nt'){
+    const f=parseFloat(document.getElementById('nf').value)||2;
+    const r=nightAdj(a,b,p,f);
+    box.innerHTML=`Netto: <strong>${fmt(r.net)}</strong><br><span class="s2">Tag ${fmt(r.dMin)} · Nacht ${fmt(r.nMin)} ×${f}</span>`;
+  }else{
+    box.innerHTML=`Netto: <strong>${fmt(Math.max(0,span(a,b)-p))}</strong>`;
+  }
+}
+function saveE(){
+  const date=document.getElementById('fd').value,note=document.getElementById('fn').value.trim();
+  if(!date)return alert('Bitte Datum ausfüllen.');
+  let e;
+  if(eT==='u'){
+    const src=document.getElementById('url-src').value;
+    // Warnung: Urlaubskonto leer?
+    const url=calcUrl();
+    if(src==='u'&&url.saldo<=0){
+      if(!confirm(`⚠️ Dein Urlaubskonto ist leer (${url.saldo} Tage)!\nTrotzdem als Urlaubstag eintragen?`))return;
+    }
+    e={type:'u',net:URLAUB_H,src,note};
+  }else if(eT==='nt'){
+    const a=document.getElementById('fs').value,b=document.getElementById('fe').value,p=parseInt(document.getElementById('fp').value)||0;
+    if(!a||!b)return alert('Bitte Von und Bis ausfüllen.');
+    const f=parseFloat(document.getElementById('nf').value)||2,r=nightAdj(a,b,p,f);
+    const warns=validateEntry(date,a,b,p,'nt',r.net);
+    if(warns&&!confirm(warns))return;
+    e={type:'nt',start:a,end:b,pause:p,net:r.net,nMin:r.nMin,dMin:r.dMin,factor:f,note};
+  }else{
+    const a=document.getElementById('fs').value,b=document.getElementById('fe').value,p=parseInt(document.getElementById('fp').value)||0;
+    if(!a||!b)return alert('Bitte Von und Bis ausfüllen.');
+    const net=Math.max(0,span(a,b)-p);
+    const warns=validateEntry(date,a,b,p,'n',net);
+    if(warns&&!confirm(warns))return;
+    e={type:'n',start:a,end:b,pause:p,net,note};
+  }
+  D[date]=e;saveD();editK=null;resetF();upd();go('k');
+}
+
+// ── Smarte Validierung ────────────────────────────────────────────────────────
+function validateEntry(date,start,end,pause,type,net){
+  const warns=[];
+  const d=new Date(date+'T12:00:00');
+  const dow=d.getDay(); // 0=So, 6=Sa
+  const bruttoMin=span(start,end);
+
+  // Wochenende?
+  if(dow===0||dow===6){
+    warns.push(`📅 ${ddisp(date)} ist ein ${dow===0?'Sonntag':'Samstag'} — Wochenendarbeit?`);
+  }
+
+  // Bereits eingetragen?
+  if(D[date]&&!editK){
+    const alt=D[date];
+    const altInfo=alt.type==='u'?'Urlaubstag':`${alt.start}–${alt.end} (${fmt(alt.net)})`;
+    warns.push(`⚠️ Für diesen Tag existiert bereits ein Eintrag:\n${altInfo}\nMöchtest du ihn überschreiben?`);
+  }
+
+  // Sehr lange Schicht?
+  if(bruttoMin>12*60){
+    warns.push(`⏱️ Schicht über 12h (${fmt(bruttoMin)} brutto) — stimmt das?`);
+  }
+
+  // Zu wenig Pause bei langer Schicht?
+  if(bruttoMin>6*60&&pause<30&&type!=='nt'){
+    warns.push(`☕ Pause unter 30min bei einer Schicht über 6h — vergessen einzutragen?`);
+  }
+
+  // Nachtschicht aber Zeiten nicht im Nachtfenster?
+  if(type==='nt'){
+    const s=toM(start),e2=toM(end);
+    const inNight=(s>=20*60||s<5*60)||(e2>20*60||e2<=5*60);
+    if(!inNight){
+      warns.push(`🌙 Als Nachtschicht markiert, aber die Zeiten liegen komplett im Tagbereich (${start}–${end}) — korrekt?`);
+    }
+  }
+
+  // Wochenstunden nach diesem Eintrag prüfen
+  const wk=isoWk(date);
+  const wkKeys=keys().filter(k=>isoWk(k)===wk&&k!==date&&D[k].type!=='u');
+  const wkIst=wkKeys.reduce((s,k)=>s+(D[k].net||0),0)+net;
+  if(wkIst>60*60){
+    warns.push(`📊 Mit diesem Eintrag kommst du auf ${fmt(wkIst)} in KW ${parseInt(wk.split('-W')[1])} — über 60h, alles korrekt?`);
+  } else if(wkIst<35*60&&dow===5){
+    // Freitag und unter 35h → Woche fast vorbei, wenig Stunden
+    warns.push(`📊 Diese Woche erst ${fmt(wkIst)} — deutlich unter Soll (${S.soll}h). Fehlen noch Einträge?`);
+  }
+
+  // Eintr. in der Zukunft?
+  if(d>new Date()&&!editK){
+    warns.push(`🔮 ${ddisp(date)} liegt in der Zukunft — Vorab-Eintrag?`);
+  }
+
+  if(!warns.length)return null;
+  return warns.join('\n\n')+'\n\nTrotzdem speichern?';
+}
+function cancelE(){editK=null;resetF()}
+function resetF(){
+  document.getElementById('fd').value=iso(new Date());
+  ['fs','fe'].forEach((id,i)=>document.getElementById(id).value=i?'15:30':'07:00');
+  document.getElementById('fp').value='30';document.getElementById('fn').value='';
+  document.getElementById('ftit').textContent='Neuer Eintrag';
+  document.getElementById('sbtn').textContent='Speichern';
+  document.getElementById('cbtn').style.display='none';
+  setT('n');
+}
+function startEdit(k){
+  const e=D[k];editK=k;
+  document.getElementById('fd').value=k;document.getElementById('fn').value=e.note||'';
+  if(e.type==='u'){setT('u');document.getElementById('url-src').value=e.src||'u'}
+  else{
+    document.getElementById('fs').value=e.start;document.getElementById('fe').value=e.end;document.getElementById('fp').value=e.pause;
+    if(e.type==='nt'){document.getElementById('nf').value=String(e.factor||2);setT('nt')}else setT('n');
+  }
+  document.getElementById('ftit').textContent='Bearbeiten';
+  document.getElementById('sbtn').textContent='Aktualisieren';
+  document.getElementById('cbtn').style.display='block';
+  uprev();go('e');window.scrollTo(0,0);
+}
+function delE(k){if(!confirm(`${ddisp(k)} löschen?`))return;delete D[k];saveD();upd();go('k')}
+function upd(){document.getElementById('ecnt').textContent=`${Object.keys(D).length} Einträge`}
+
+// ── Konten ───────────────────────────────────────────────────────────────────
+function rkonten(){
+  const ot=calcOT(),url=calcUrl();
+  const soll=S.soll*60;
+  // APS
+  document.getElementById('k-aps').textContent=fmt(ot.aps);
+  document.getElementById('k-aps-sub').textContent=`von max. 8h (${Math.round(ot.aps/APS_MAX*100)}%)`;
+  document.getElementById('k-aps-bar').style.width=Math.min(100,ot.aps/APS_MAX*100)+'%';
+  // Fussenegger
+  document.getElementById('k-fus').textContent=fmt(ot.fus);
+  // Urlaub
+  document.getElementById('k-url').textContent=fmtD(Math.max(0,url.saldo));
+  document.getElementById('k-url-sub').textContent=`${url.start} Start + ${url.auto} auto − ${url.used} verbraucht`;
+  // Diese Woche
+  const td=new Date(),mon=new Date(td);mon.setDate(td.getDate()-((td.getDay()+6)%7));
+  const dks=[];for(let i=0;i<7;i++){const d=new Date(mon);d.setDate(mon.getDate()+i);dks.push(iso(d))}
+  const wIst=dks.filter(k=>D[k]&&D[k].type!=='u').reduce((s,k)=>s+(D[k].net||0),0);
+  const diff=wIst-soll;
+  const dv=diff>=0?`<span class="pos">+${fmt(diff)}</span>`:`<span class="neg">−${fmt(Math.abs(diff))}</span>`;
+  document.getElementById('k-week').innerHTML=`
+    <div class="otrow"><div class="otl">Ist-Stunden<small>ohne Urlaub</small></div><span class="otv">${fmt(wIst)}</span></div>
+    <div class="otrow"><div class="otl">Soll<small>${S.soll}h/Woche</small></div><span class="otv">${fmt(soll)}</span></div>
+    <div class="otrow"><div class="otl">Differenz</div><span class="otv">${dv}</span></div>`;
+  // Einstellungen befüllen
+  document.getElementById('soll').value=S.soll;
+  document.getElementById('url-start').value=S.urlStart;
+  document.getElementById('url-from').value=S.urlFrom;
+}
+
+// ── Wochenansicht ─────────────────────────────────────────────────────────────
+function rwv(){
+  const td=new Date(),tdi=iso(td);
+  const mon=new Date(td);mon.setDate(td.getDate()-((td.getDay()+6)%7)+wOff*7);
+  const sun=new Date(mon);sun.setDate(mon.getDate()+6);
+  const wk=isoWk(iso(mon)),wn=parseInt(wk.split('-W')[1]);
+  document.getElementById('wnl').textContent=`KW ${wn} · ${mon.getDate()}. ${DMS[mon.getMonth()]} – ${sun.getDate()}. ${DMS[sun.getMonth()]} ${sun.getFullYear()}`;
+  const dks=[];for(let i=0;i<7;i++){const d=new Date(mon);d.setDate(mon.getDate()+i);dks.push(iso(d))}
+  const wtot=sumM(dks.filter(k=>D[k]));
+  let h=`<div class="wkhr"><div class="wkkw">KW ${wn}</div><div class="wktb">${fmt(wtot)}</div></div>`;
+  const dn=['Mo','Di','Mi','Do','Fr','Sa','So'];
+  dks.forEach((k,i)=>{
+    const e=D[k],isT=k===tdi,isW=i>=5,t=e?.type||'';
+    let dot='',hcls='e',htxt='–',meta='';
+    if(e){
+      dot=t==='u'?(e.src==='ot'?'dok':'du'):t==='nt'?'dn':'dw';
+      hcls=t==='u'?(e.src==='ot'?'ok':'u'):t==='nt'?'n':'';
+      htxt=fmt(e.net);
+      meta=`<div class="wdm">${t==='u'?'Urlaub ('+(e.src==='ot'?'ÜS)':'Konto)'):t==='nt'?e.start+'–'+e.end+' 🌙':e.start+'–'+e.end}</div>`;
+    }
+    const dd=new Date(k+'T12:00:00');
+    h+=`<div class="wd${isT?' td':''}${isW?' we':''}" onclick="startEdit('${k}')">
+      <div class="wdl"><div class="dot ${dot}"></div>
+        <div><div class="wdn">${dn[i]} <span class="wddt">${dd.getDate()}. ${DMS[dd.getMonth()]}</span></div>${meta}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="wdh ${hcls}">${htxt}</span>
+        ${e?`<button class="del" onclick="event.stopPropagation();delE('${k}')">×</button>`:''}
+      </div></div>`;
+  });
+  document.getElementById('wbox').innerHTML=h;
+}
+
+// ── Monatsansicht ─────────────────────────────────────────────────────────────
+function rmonth(){
+  const now=new Date(),y=now.getFullYear(),mo=now.getMonth()+mOff;
+  const d=new Date(y,mo,1);
+  const yr=d.getFullYear(),mr=d.getMonth();
+  document.getElementById('mnl').textContent=`${DML[mr]} ${yr}`;
+  // Alle Tage des Monats
+  const monthKey=`${yr}-${pad(mr+1)}`;
+  const mKeys=keys().filter(k=>k.startsWith(monthKey));
+  // Nach Wochen gruppieren
+  const byWk={};
+  // Erzeuge alle Tage des Monats
+  const daysInMonth=new Date(yr,mr+1,0).getDate();
+  for(let day=1;day<=daysInMonth;day++){
+    const dk=`${yr}-${pad(mr+1)}-${pad(day)}`;
+    const wk=isoWk(dk);
+    if(!byWk[wk])byWk[wk]=[];
+    byWk[wk].push(dk);
+  }
+  // Monatsgesamt
+  const mTot=sumM(mKeys);
+  let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <span style="font-size:12px;color:#8E8E93">${mKeys.length} Einträge</span>
+    <span style="font-size:15px;font-weight:700;color:#FF6B35">${fmt(mTot)}</span></div>`;
+  const sortedWks=Object.keys(byWk).sort();
+  sortedWks.forEach(wk=>{
+    const dks=byWk[wk];
+    const wIst=sumM(dks.filter(k=>D[k]));
+    const wn=parseInt(wk.split('-W')[1]);
+    h+=`<div class="wbox" style="margin-bottom:10px">
+      <div class="wk-sep"><span>KW ${wn} · ${wkLabel(wk)}</span><span>${fmt(wIst)}</span></div>`;
+    dks.forEach(k=>{
+      const e=D[k],d=new Date(k+'T12:00:00'),dow=DY[d.getDay()];
+      const isWe=(d.getDay()===0||d.getDay()===6);
+      const t=e?.type||'';
+      let dot='',hcls='e',htxt='–',meta='';
+      if(e){
+        dot=t==='u'?(e.src==='ot'?'dok':'du'):t==='nt'?'dn':'dw';
+        hcls=t==='u'?(e.src==='ot'?'ok':'u'):t==='nt'?'n':'';
+        htxt=fmt(e.net);
+        meta=t==='u'?` <span class="etag u">${e.src==='ot'?'ÜS':'Urlaub'}</span>`:t==='nt'?` <span class="etag n">Nacht</span>`:'';
+      }
+      h+=`<div class="wd${isWe?' we':''}" onclick="startEdit('${k}')">
+        <div class="wdl"><div class="dot ${dot}"></div>
+          <div><div class="wdn" style="font-size:13px">${dow} <span class="wddt">${d.getDate()}.</span>${meta}</div>
+          ${e&&t!=='u'?`<div class="wdm">${e.start}–${e.end}</div>`:''}
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="wdh ${hcls}" style="font-size:14px">${htxt}</span>
+          ${e?`<button class="del" onclick="event.stopPropagation();delE('${k}')">×</button>`:''}
+        </div></div>`;
+    });
+    h+='</div>';
+  });
+  if(!mKeys.length)h+='<div class="empty">Keine Einträge in diesem Monat.</div>';
+  document.getElementById('mbox').innerHTML=h;
+}
+
+// ── Ausdruck ─────────────────────────────────────────────────────────────────
+function setXM(m){
+  xMode=m;
+  document.getElementById('xm-m').classList.toggle('on',m==='m');
+  document.getElementById('xm-k').classList.toggle('on',m==='k');
+  document.getElementById('xsm').style.display=m==='m'?'block':'none';
+  document.getElementById('xsk').style.display=m==='k'?'block':'none';
+  document.getElementById('xsl').textContent=m==='m'?'Monat':'Kalenderwoche';
+  rxp();
+}
+function fillSel(id,opts){
+  const s=document.getElementById(id),v=s.value;
+  s.innerHTML='<option value="">Alle</option>';
+  opts.forEach(o=>{const op=document.createElement('option');op.value=o.v;op.textContent=o.t;if(o.v===v)op.selected=true;s.appendChild(op)});
+}
+function rxsel(){
+  const DML2=DML;
+  fillSel('xsm',months().map(m=>{const[y,mo]=m.split('-');return{v:m,t:`${DML2[parseInt(mo)-1]} ${y}`}}));
+  fillSel('xsk',wks().map(w=>({v:w,t:wkLabel(w)})));
+  rxp();
+}
+function xKeys(){
+  if(xMode==='k'){const f=document.getElementById('xsk').value;return keys().filter(k=>!f||isoWk(k)===f)}
+  const f=document.getElementById('xsm').value;return keys().filter(k=>!f||k.startsWith(f));
+}
+function xTitle(){
+  if(xMode==='k'){const v=document.getElementById('xsk').value;return v?wkLabel(v):'Alle Einträge'}
+  const v=document.getElementById('xsm').value;if(!v)return'Alle Einträge';
+  const[y,m]=v.split('-');return`${DML[parseInt(m)-1]} ${y}`;
+}
+let xView='aps';
+function setXV(v){xView=v;document.getElementById('xv-aps').classList.toggle('on',v==='aps');document.getElementById('xv-fus').classList.toggle('on',v==='fus');rxp()}
+function rxp(){
+  const ks=xKeys(),el=document.getElementById('xview');
+  if(!ks.length){el.innerHTML='<div class="empty">Keine Einträge.</div>';return}
+
+  if(xView==='aps'){
+    const byWk={};
+    [...ks].sort().forEach(k=>{const w=isoWk(k);if(!byWk[w])byWk[w]=[];byWk[w].push(k)});
+    let apsVoll=S.apsFull||false;
+    let h='',totalAps=0;
+
+    Object.keys(byWk).sort().forEach(wk=>{
+      const wKeys=byWk[wk];
+      const arbTage=wKeys.filter(k=>D[k].type!=='u');
+      const urlTage=wKeys.filter(k=>D[k].type==='u');
+      const wIst=arbTage.reduce((s,k)=>s+(D[k].net||0),0);
+      const wn=parseInt(wk.split('-W')[1]);
+
+      // Zielstunden bestimmen
+      let ziel;
+      if(!apsVoll&&wIst>39*60){
+        ziel=40*60;apsVoll=true;S.apsFull=true;st.s(SS,JSON.stringify(S));
+      } else {
+        ziel=Math.min(wIst,39*60);
+      }
+      totalAps+=ziel;
+      const istVierzig=ziel===40*60;
+
+      // Mo–Fr aufbauen
+      const[ys,ws]=wk.split('-W');
+      const mon=wkMon(parseInt(ys),parseInt(ws));
+      const tagNamen=['Mo','Di','Mi','Do','Fr'];
+
+      // Welche Wochentage sind Urlaub/ZA? (0=Mo ... 4=Fr)
+      const urlaubAnTag=new Set();
+      urlTage.forEach(k=>{
+        const d=new Date(k+'T12:00:00');
+        const dow=(d.getDay()+6)%7; // Mo=0, Fr=4
+        if(dow<5)urlaubAnTag.add(dow);
+      });
+
+      h+=`<div class="card-sm">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:12px;font-weight:700;color:#FF6B35">KW ${wn} · ${wkLabel(wk)}</span>
+          <span style="font-size:14px;font-weight:800;color:#FF6B35">${fmt(ziel)}${istVierzig?' ✓':''}</span>
+        </div>`;
+
+      tagNamen.forEach((tn,i)=>{
+        const d=new Date(mon);d.setDate(mon.getDate()+i);
+        if(urlaubAnTag.has(i)){
+          // Urlaubstag/ZA an diesem Tag
+          const uk=urlTage.find(k=>{const dd=new Date(k+'T12:00:00');return((dd.getDay()+6)%7)===i});
+          const lbl=uk&&D[uk]?.src==='ot'?'Zeitausgleich':'Urlaub';
+          h+=`<div style="display:flex;justify-content:space-between;padding:5px 0;border-top:1px solid #2C2C2E;font-size:13px">
+            <span style="color:#30D158">🏖️ ${tn}, ${d.getDate()}. ${DMS[d.getMonth()]} <span class="etag u">${lbl}</span></span>
+            <span style="font-weight:600;color:#30D158">8h</span></div>`;
+        } else {
+          // Normaler Arbeitstag — fix 8h (Mo–Do) oder 7h (Fr), bei 40h-Woche alle 8h
+          const h_tag=istVierzig?8*60:(i<4?8*60:7*60);
+          h+=`<div style="display:flex;justify-content:space-between;padding:5px 0;border-top:1px solid #2C2C2E;font-size:13px">
+            <span style="color:#8E8E93">${tn}, ${d.getDate()}. ${DMS[d.getMonth()]}</span>
+            <span style="font-weight:600">${fmt(h_tag)}</span></div>`;
+        }
+      });
+
+      h+='</div>';
+    });
+
+    h+=`<div class="card" style="background:rgba(255,107,53,.08);border-color:rgba(255,107,53,.3)">
+      <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:800">
+        <span>Gesamt APS</span><span style="color:#FF6B35">${fmt(totalAps)}</span></div>
+      <div style="font-size:11px;color:#8E8E93;margin-top:6px">APS-Konto: ${apsVoll?'✅ 8h erreicht – ab jetzt alles → Fussenegger':'⏳ noch nicht erreicht'}</div>
+    </div>
+    <div class="card-sm" style="border-color:#3A3A3C">
+      <div style="font-size:11px;color:#636366;margin-bottom:6px">APS-Status zurücksetzen (falls Fehler)</div>
+      <button class="btn-sm" onclick="resetApsFull()">Zurücksetzen</button>
+    </div>`;
+    el.innerHTML=h;
+
+  } else {
+    // Fussenegger: originale Stunden
+    const byWk={};
+    [...ks].sort().forEach(k=>{const w=isoWk(k);if(!byWk[w])byWk[w]=[];byWk[w].push(k)});
+    const ot=calcOT();
+    let h='';
+    Object.keys(byWk).sort().forEach(wk=>{
+      const wKeys=byWk[wk],wIst=sumM(wKeys),wn=parseInt(wk.split('-W')[1]);
+      h+=`<div class="card-sm">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span style="font-size:12px;font-weight:700;color:#64D2FF">KW ${wn} · ${wkLabel(wk)}</span>
+          <span style="font-size:14px;font-weight:800;color:#64D2FF">${fmt(wIst)}</span>
+        </div>`;
+      wKeys.forEach(k=>{
+        const e=D[k],t=e.type;
+        const tag=t==='u'?`<span class="etag u">${e.src==='ot'?'Zeitausgleich':'Urlaub'}</span>`:t==='nt'?'<span class="etag n">Nacht</span>':'';
+        const detail=t==='u'?`Urlaubstag (${e.src==='ot'?'aus Überstunden':'aus Urlaubskonto'})`:`${e.start}–${e.end} · Pause ${e.pause}min`;
+        h+=`<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:5px 0;border-top:1px solid #2C2C2E;font-size:13px">
+          <div><span style="color:#8E8E93">${ddisp(k)}${tag}</span><div style="font-size:11px;color:#48484A">${detail}</div></div>
+          <span style="font-weight:600;flex-shrink:0;margin-left:8px">${fmt(e.net)}</span></div>`;
+      });
+      h+='</div>';
+    });
+    h+=`<div class="card" style="background:rgba(100,210,255,.06);border-color:rgba(100,210,255,.2)">
+      <div style="display:flex;justify-content:space-between;font-size:16px;font-weight:800">
+        <span>Gesamt</span><span style="color:#64D2FF">${fmt(sumM(ks))}</span></div>
+      <div style="height:1px;background:#2C2C2E;margin:10px 0"></div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+        <span>→ APS (max. 8h)</span><span style="color:#FF6B35;font-weight:700">${fmt(ot.aps)}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:13px">
+        <span>→ Fussenegger</span><span style="color:#64D2FF;font-weight:700">${fmt(ot.fus)}</span></div>
+    </div>`;
+    el.innerHTML=h;
+  }
+}
+function resetApsFull(){if(!confirm('APS-Status zurücksetzen?'))return;S.apsFull=false;st.s(SS,JSON.stringify(S));rxp()}
+function doExp(){
+  const b=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`arbeitszeiten_${iso(new Date())}.json`;a.click();
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+loadD();loadS();upd();resetF();tick();setInterval(tick,10000);
+</script>
+</body>
+</html>
